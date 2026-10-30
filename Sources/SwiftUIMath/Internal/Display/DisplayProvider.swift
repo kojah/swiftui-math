@@ -38,6 +38,15 @@ extension Math {
       style: TypesettingStyle,
       proposedWidth: CGFloat
     ) -> DisplayNode? {
+      try? displayResult(for: latex, font: font, style: style, proposedWidth: proposedWidth).get()
+    }
+
+    func displayResult(
+      for latex: String,
+      font: Font,
+      style: TypesettingStyle,
+      proposedWidth: CGFloat
+    ) -> Result<DisplayNode, RenderingFailure> {
       cache.withValue { cache in
         let roundedWidth = proposedWidth.halfPointRounded()
         let key = KeyBox(
@@ -50,11 +59,15 @@ extension Math {
         )
 
         if let displayNode = cache.displayNode.object(forKey: key) {
-          return displayNode
+          return .success(displayNode)
         }
 
+        let atomList: AtomList
+        switch self.atomList(for: latex, cache: &cache) {
+        case .success(let parsed): atomList = parsed
+        case .failure(let failure): return .failure(failure)
+        }
         guard
-          let atomList = atomList(for: latex, cache: &cache),
           let displayNode = Typesetter.createLineForMathList(
             atomList,
             font: .init(font: font),
@@ -62,7 +75,7 @@ extension Math {
             maxWidth: roundedWidth
           )
         else {
-          return nil
+          return .failure(.typesettingFailed)
         }
 
         cache.displayNode.setObject(displayNode, forKey: key)
@@ -80,21 +93,24 @@ extension Math {
           cache.displayNode.setObject(displayNode, forKey: secondaryKey)
         }
 
-        return displayNode
+        return .success(displayNode)
       }
     }
 
-    private func atomList(for latex: String, cache: inout Cache) -> AtomList? {
+    private func atomList(for latex: String, cache: inout Cache) -> Result<
+      AtomList, RenderingFailure
+    > {
       if let atomList = cache.atomList.object(forKey: latex as NSString) {
-        return atomList
+        return .success(atomList)
       }
 
-      guard let atomList = Parser.build(fromString: latex) else {
-        return nil
+      var error: ParserError?
+      guard let atomList = Parser.build(fromString: latex, error: &error) else {
+        return .failure(RenderingFailure(error))
       }
 
       cache.atomList.setObject(atomList, forKey: latex as NSString)
-      return atomList
+      return .success(atomList)
     }
   }
 }

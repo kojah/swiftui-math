@@ -101,25 +101,46 @@ extension Math {
     font: Font,
     style: TypesettingStyle
   ) -> TypographicBounds {
+    if let width = proposal.width, width <= 0 { return .zero }
+    return DisplayProvider.shared.display(
+      for: latex, font: font, style: style, proposedWidth: proposal.width ?? 0
+    ).map {
+      TypographicBounds(
+        origin: $0.position, width: $0.width, ascent: $0.ascent, descent: $0.descent)
+    } ?? .zero
+  }
+
+  /// Measures once, preserving a source-free reason when no visible math can be produced.
+  @_spi(Textual)
+  public static nonisolated func measurement(
+    for latex: String,
+    fitting proposal: ProposedViewSize,
+    font: Font,
+    style: TypesettingStyle
+  ) -> Result<TypographicBounds, RenderingFailure> {
     if let width = proposal.width, width <= 0 {
-      return .zero
+      return .failure(.invalidProposedWidth)
     }
 
     return DisplayProvider.shared
-      .display(
+      .displayResult(
         for: latex,
         font: font,
         style: style,
         proposedWidth: proposal.width ?? 0
       )
-      .map {
-        TypographicBounds(
+      .flatMap {
+        let bounds = TypographicBounds(
           origin: $0.position,
           width: $0.width,
           ascent: $0.ascent,
           descent: $0.descent
         )
-      } ?? .zero
+        guard bounds.width > 0, bounds.size.height > 0 else {
+          return .failure(.emptyLayout)
+        }
+        return .success(bounds)
+      }
   }
 }
 
