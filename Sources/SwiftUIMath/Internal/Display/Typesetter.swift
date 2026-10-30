@@ -2396,11 +2396,11 @@ extension Math {
     // MARK: - Large Operators
 
     func makeLargeOp(_ op: LargeOperator!) -> DisplayNode? {
-      // Show limits above/below in both display and text (inline) modes
-      // Only show limits to the side in script modes to keep them compact
-      let limits = op.limits && (style == .display || style == .text)
+      // Preserve built-in operator behavior. Named starred operators use
+      // display limits, keeping scripts beside the name in inline formulas.
+      let limits = op.limits && (style == .display || (style == .text && !op.usesDisplayLimits))
       var delta = CGFloat(0)
-      if op.nucleus.count == 1 {
+      if op.nucleus.count == 1 && !op.isNamedOperator {
         var glyph = self.findGlyphForCharacterAtIndex(op.nucleus.startIndex, inString: op.nucleus)
         if style == .display && glyph != 0 {
           // Enlarge the character in display style.
@@ -2465,8 +2465,8 @@ extension Math {
         currentPosition.x += display!.width
         return display
       }
-      // Show limits above/below in both display and text (inline) modes
-      if op.limits && (style == .display || style == .text) {
+      // Explicit limits also apply inline; starred named operators use display limits.
+      if op.limits && (style == .display || (style == .text && !op.usesDisplayLimits)) {
         // make limits
         var superscript: DisplayList? = nil
         var `subscript`: DisplayList? = nil

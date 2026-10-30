@@ -573,14 +573,19 @@ extension Math {
             }
           } else if atom.type == .largeOperator {
             let op = atom as! LargeOperator
-            let command = AtomFactory.latexSymbolName(for: atom)
-            let originalOp = AtomFactory.atom(forLatexSymbol: command!) as! LargeOperator
-            str += "\\\(command!) "
-            if originalOp.limits != op.limits {
-              if op.limits {
-                str += "\\limits "
-              } else {
-                str += "\\nolimits "
+            if op.isNamedOperator {
+              str += "\\operatorname\(op.usesDisplayLimits && op.limits ? "*" : ""){\(op.nucleus)}"
+              if op.limits && !op.usesDisplayLimits { str += "\\limits " }
+            } else {
+              let command = AtomFactory.latexSymbolName(for: atom)
+              let originalOp = AtomFactory.atom(forLatexSymbol: command!) as! LargeOperator
+              str += "\\\(command!) "
+              if originalOp.limits != op.limits {
+                if op.limits {
+                  str += "\\limits "
+                } else {
+                  str += "\\nolimits "
+                }
               }
             }
           } else if atom.type == .space {
@@ -750,6 +755,8 @@ extension Math {
         let newInner = currentInnerAtom
         currentInnerAtom = oldInner
         return newInner
+      } else if command == "operatorname" || command == "operatorname*" {
+        return readNamedOperator(displayLimits: command.hasSuffix("*"))
       } else if command == "boxed" {
         skipSpaces()
         guard hasCharacters else {
@@ -1008,6 +1015,7 @@ extension Math {
         } else {
           let op = atom as! LargeOperator
           op.limits = true
+          op.usesDisplayLimits = false
         }
         return true
       } else if modifier == "nolimits" {
@@ -1017,6 +1025,7 @@ extension Math {
         } else {
           let op = atom as! LargeOperator
           op.limits = false
+          op.usesDisplayLimits = false
         }
         return true
       }
@@ -1124,6 +1133,8 @@ extension Math {
         let newInner = self.currentInnerAtom
         currentInnerAtom = oldInner
         return newInner
+      } else if command == "operatorname" || command == "operatorname*" {
+        return readNamedOperator(displayLimits: command.hasSuffix("*"))
       } else if command == "boxed" {
         skipSpaces()
         guard hasCharacters else {
@@ -1178,6 +1189,34 @@ extension Math {
         self.setError(.invalidCommand, message: "Invalid command \\\(command)")
         return nil
       }
+    }
+
+    /// Plain operator names use upright text and operator spacing. More complex
+    /// arguments fail explicitly so callers can preserve the original source.
+    mutating func readNamedOperator(displayLimits: Bool) -> Atom? {
+      guard expectCharacter("{") else {
+        setError(.characterNotFound, message: "Missing braced argument for \\operatorname")
+        return nil
+      }
+      var name = ""
+      let allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -"
+      while hasCharacters {
+        let character = nextCharacter()
+        if character == "}" {
+          let op = LargeOperator(limits: displayLimits)
+          op.isNamedOperator = true
+          op.usesDisplayLimits = displayLimits
+          op.nucleus = name
+          return op
+        }
+        guard allowed.contains(character) else {
+          setError(.invalidCommand, message: "Unsupported syntax in \\operatorname argument")
+          return nil
+        }
+        name.append(character)
+      }
+      setError(.mismatchedBraces, message: "Missing closing brace for \\operatorname")
+      return nil
     }
 
     mutating func readEnvironment() -> String? {
