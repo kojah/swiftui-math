@@ -36,6 +36,7 @@ extension Math {
     case overline
     // An accented atom - Accent in TeX
     case accent
+    case boxed
 
     // Atoms after this point do not support subscripts or superscripts
 
@@ -104,6 +105,7 @@ extension Math.AtomType: CustomStringConvertible {
     case .inner: return "Inner"
     case .underline: return "Underline"
     case .overline: return "Overline"
+    case .boxed: return "Boxed"
     case .accent: return "Accent"
     case .boundary: return "Boundary"
     case .space: return "Space"
@@ -234,6 +236,8 @@ extension Math {
         return (self as? Inner).map {
           Inner($0)
         } ?? Inner()
+      case .boxed:
+        return (self as? Boxed).map { Boxed($0) } ?? Boxed()
       case .overline:
         return (self as? Overline).map {
           Overline($0)

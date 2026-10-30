@@ -22,6 +22,8 @@ extension CGContext {
       draw(fraction, foregroundColor: foregroundColor)
     case let radical as Math.DisplayRadical:
       draw(radical, foregroundColor: foregroundColor)
+    case let box as Math.DisplayBox:
+      draw(box, foregroundColor: foregroundColor)
     case let line as Math.DisplayLine:
       draw(line, foregroundColor: foregroundColor)
     case let largeOperator as Math.DisplayLargeOperator:
@@ -164,6 +166,15 @@ extension CGContext {
     addLine(to: lineEnd)
     strokePath()
 
+    restoreGState()
+  }
+
+  private func draw(_ box: Math.DisplayBox, foregroundColor: CGColor) {
+    draw(box.inner, foregroundColor: foregroundColor)
+    saveGState()
+    setStrokeColor(foregroundColor)
+    setLineWidth(box.lineThickness)
+    stroke(box.bounds.insetBy(dx: box.lineThickness / 2, dy: box.lineThickness / 2))
     restoreGState()
   }
 

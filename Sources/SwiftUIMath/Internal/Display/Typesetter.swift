@@ -65,7 +65,7 @@ func getInterElementSpaceArrayIndexForType(_ type: Math.AtomType, row: Bool) -> 
   case .number, .variable, .unaryOperator:
     return 0
   // Decorative types (accent, underline, overline) are treated as ordinary
-  case .accent, .underline, .overline:
+  case .accent, .underline, .overline, .boxed:
     return 0
   // Special types that don't typically participate in spacing are treated as ordinary
   case .boundary, .space, .style, .table:
@@ -1230,6 +1230,27 @@ extension Math {
           displayAtoms.append(display!)
           currentPosition.x += display!.width
           // add super scripts || subscripts
+          if atom.`subscript` != nil || atom.superscript != nil {
+            self.makeScripts(
+              atom, display: display, index: UInt(atom.indexRange.location), delta: 0)
+          }
+
+        case .boxed:
+          if currentLine.length > 0 {
+            self.addDisplayLine()
+          }
+          self.addInterElementSpace(prevNode, currentType: .ordinary)
+          // Match amsmath: boxed content uses display style, with padding inside the rule.
+          let boxed = atom as! Boxed
+          let inner = Typesetter.createLineForMathList(
+            boxed.innerList, font: font, style: .display)!
+          let display = DisplayBox(
+            inner: inner, padding: font.font.size * 0.15,
+            lineThickness: styleFont.metrics.overbarRuleThickness,
+            position: currentPosition, range: atom.indexRange)
+          atom.type = .ordinary
+          displayAtoms.append(display)
+          currentPosition.x += display.width
           if atom.`subscript` != nil || atom.superscript != nil {
             self.makeScripts(
               atom, display: display, index: UInt(atom.indexRange.location), delta: 0)

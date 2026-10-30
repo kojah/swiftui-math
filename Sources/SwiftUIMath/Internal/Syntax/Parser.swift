@@ -555,6 +555,8 @@ extension Math {
                 str += "\\end{\(table.environment)}"
               }
             }
+          } else if let boxed = atom as? Boxed {
+            str += "\\boxed{\(atomListToString(boxed.innerList))}"
           } else if atom.type == .overline {
             if let overline = atom as? Overline {
               str += "\\overline"
@@ -748,6 +750,13 @@ extension Math {
         let newInner = currentInnerAtom
         currentInnerAtom = oldInner
         return newInner
+      } else if command == "boxed" {
+        skipSpaces()
+        guard hasCharacters else {
+          setError(.characterNotFound, message: "Missing argument for \\boxed")
+          return nil
+        }
+        return Boxed(innerList: self.buildInternal(true))
       } else if command == "overline" {
         // The overline command has 1 arguments
         let over = Overline()
@@ -1115,6 +1124,13 @@ extension Math {
         let newInner = self.currentInnerAtom
         currentInnerAtom = oldInner
         return newInner
+      } else if command == "boxed" {
+        skipSpaces()
+        guard hasCharacters else {
+          setError(.characterNotFound, message: "Missing argument for \\boxed")
+          return nil
+        }
+        return Boxed(innerList: self.buildInternal(true))
       } else if command == "overline" {
         let over = Overline()
         over.innerList = self.buildInternal(true)
