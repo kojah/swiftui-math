@@ -37,6 +37,7 @@ extension Math {
     // An accented atom - Accent in TeX
     case accent
     case boxed
+    case underbrace
 
     // Atoms after this point do not support subscripts or superscripts
 
@@ -68,7 +69,7 @@ extension Math {
 extension Math.AtomType {
   var disallowsFollowingBinaryOperator: Bool {
     switch self {
-    case .binaryOperator, .relation, .open, .punctuation, .largeOperator:
+    case .binaryOperator, .relation, .open, .punctuation, .largeOperator, .underbrace:
       return true
     default:
       return false
@@ -106,6 +107,7 @@ extension Math.AtomType: CustomStringConvertible {
     case .underline: return "Underline"
     case .overline: return "Overline"
     case .boxed: return "Boxed"
+    case .underbrace: return "Underbrace"
     case .accent: return "Accent"
     case .boundary: return "Boundary"
     case .space: return "Space"
@@ -236,6 +238,8 @@ extension Math {
         return (self as? Inner).map {
           Inner($0)
         } ?? Inner()
+      case .underbrace:
+        return (self as? Underbrace).map { Underbrace($0) } ?? Underbrace()
       case .boxed:
         return (self as? Boxed).map { Boxed($0) } ?? Boxed()
       case .overline:

@@ -24,6 +24,8 @@ extension CGContext {
       draw(radical, foregroundColor: foregroundColor)
     case let box as Math.DisplayBox:
       draw(box, foregroundColor: foregroundColor)
+    case let brace as Math.DisplayUnderbrace:
+      draw(brace, foregroundColor: foregroundColor)
     case let line as Math.DisplayLine:
       draw(line, foregroundColor: foregroundColor)
     case let largeOperator as Math.DisplayLargeOperator:
@@ -37,6 +39,21 @@ extension CGContext {
 }
 
 extension CGContext {
+  private func draw(_ brace: Math.DisplayUnderbrace, foregroundColor: CGColor) {
+    draw(brace.inner, foregroundColor: foregroundColor)
+    if let lower = brace.lower { draw(lower, foregroundColor: foregroundColor) }
+    if let upper = brace.upper { draw(upper, foregroundColor: foregroundColor) }
+    saveGState()
+    translateBy(x: brace.braceOrigin.x, y: brace.braceOrigin.y)
+    setStrokeColor(foregroundColor)
+    setLineWidth(brace.lineThickness)
+    setLineCap(.round)
+    setLineJoin(.round)
+    addPath(brace.bracePath)
+    strokePath()
+    restoreGState()
+  }
+
   private func draw(_ list: Math.DisplayList, foregroundColor: CGColor) {
     saveGState()
 

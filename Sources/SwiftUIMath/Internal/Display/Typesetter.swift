@@ -36,7 +36,7 @@ func getInterElementSpaceArrayIndexForType(_ type: Math.AtomType, row: Bool) -> 
   switch type {
   case .color, .textColor, .colorBox, .ordinary, .placeholder:  // A placeholder is treated as ordinary
     return 0
-  case .largeOperator:
+  case .largeOperator, .underbrace:
     return 1
   case .binaryOperator:
     return 2
@@ -1234,6 +1234,26 @@ extension Math {
             self.makeScripts(
               atom, display: display, index: UInt(atom.indexRange.location), delta: 0)
           }
+
+        case .underbrace:
+          if currentLine.length > 0 { self.addDisplayLine() }
+          self.addInterElementSpace(prevNode, currentType: .largeOperator)
+          let brace = atom as! Underbrace
+          let inner = Typesetter.createLineForMathList(
+            brace.innerList, font: styleFont, style: .display)!
+          let lower = brace.subscript.flatMap {
+            Typesetter.createLineForMathList($0, font: font, style: scriptStyle(), cramped: true)
+          }
+          let upper = brace.superscript.flatMap {
+            Typesetter.createLineForMathList($0, font: font, style: scriptStyle(), cramped: false)
+          }
+          let display = DisplayUnderbrace(
+            inner: inner, lower: lower, upper: upper, fontSize: styleFont.font.size,
+            lineThickness: styleFont.metrics.overbarRuleThickness,
+            position: currentPosition, range: atom.indexRange)
+          atom.type = .largeOperator
+          displayAtoms.append(display)
+          currentPosition.x += display.width
 
         case .boxed:
           if currentLine.length > 0 {

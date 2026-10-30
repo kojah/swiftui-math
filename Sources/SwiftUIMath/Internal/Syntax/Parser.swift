@@ -555,6 +555,8 @@ extension Math {
                 str += "\\end{\(table.environment)}"
               }
             }
+          } else if let underbrace = atom as? Underbrace {
+            str += "\\underbrace{\(atomListToString(underbrace.innerList))}"
           } else if let boxed = atom as? Boxed {
             str += "\\boxed{\(atomListToString(boxed.innerList))}"
           } else if atom.type == .overline {
@@ -757,6 +759,13 @@ extension Math {
         return newInner
       } else if command == "operatorname" || command == "operatorname*" {
         return readNamedOperator(displayLimits: command.hasSuffix("*"))
+      } else if command == "underbrace" {
+        skipSpaces()
+        guard hasCharacters else {
+          setError(.characterNotFound, message: "Missing argument for \\underbrace")
+          return nil
+        }
+        return Underbrace(innerList: self.buildInternal(true))
       } else if command == "boxed" {
         skipSpaces()
         guard hasCharacters else {
@@ -1135,6 +1144,13 @@ extension Math {
         return newInner
       } else if command == "operatorname" || command == "operatorname*" {
         return readNamedOperator(displayLimits: command.hasSuffix("*"))
+      } else if command == "underbrace" {
+        skipSpaces()
+        guard hasCharacters else {
+          setError(.characterNotFound, message: "Missing argument for \\underbrace")
+          return nil
+        }
+        return Underbrace(innerList: self.buildInternal(true))
       } else if command == "boxed" {
         skipSpaces()
         guard hasCharacters else {
