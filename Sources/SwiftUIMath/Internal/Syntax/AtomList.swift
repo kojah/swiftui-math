@@ -221,6 +221,8 @@ extension Math {
     }
 
     func copy() -> Atom {
+      if let stack = self as? StackRelation { return StackRelation(stack) }
+      if let delimiter = self as? SizedDelimiter { return SizedDelimiter(delimiter) }
       switch type {
       case .fraction:
         return (self as? Fraction).map {

@@ -456,7 +456,11 @@ extension Math {
             }
             currentFontStyle = atom.fontStyle
           }
-          if atom.type == .fraction {
+          if let stack = atom as? StackRelation {
+            str += "\\stackrel{\(atomListToString(stack.annotation))}{\(atomListToString(stack.base))}"
+          } else if let delimiter = atom as? SizedDelimiter {
+            str += "\\\(delimiter.command)\(delimiterToString(Atom(type: .boundary, nucleus: delimiter.nucleus))) "
+          } else if atom.type == .fraction {
             if let frac = atom as? Fraction {
               if frac.isContinuedFraction {
                 // Generate \cfrac with optional alignment
@@ -757,6 +761,22 @@ extension Math {
         let newInner = currentInnerAtom
         currentInnerAtom = oldInner
         return newInner
+      } else if command == "stackrel" {
+        skipSpaces()
+        guard hasCharacters, let annotation = buildInternal(true) else {
+          setError(.characterNotFound, message: "Missing annotation for \\stackrel")
+          return nil
+        }
+        skipSpaces()
+        guard hasCharacters, let base = buildInternal(true) else {
+          setError(.characterNotFound, message: "Missing base for \\stackrel")
+          return nil
+        }
+        return StackRelation(annotation: annotation, base: base)
+      } else if let specification = SizedDelimiter.specification(for: command) {
+        guard let delimiter = getBoundaryAtom(command) else { return nil }
+        return SizedDelimiter(command: command, delimiter: delimiter.nucleus,
+          sizeInEm: specification.size, spacing: specification.spacing)
       } else if command == "operatorname" || command == "operatorname*" {
         return readNamedOperator(displayLimits: command.hasSuffix("*"))
       } else if command == "underbrace" {

@@ -468,10 +468,10 @@ extension Math {
           atom.type = .ordinary
         }
 
-        if atom.type == .ordinary {
+        if atom.type == .ordinary && !(atom is SizedDelimiter) {
           // This is Rule 14 to merge ordinary characters.
           // combine ordinary atoms together
-          if prevNode != nil && prevNode.type == .ordinary && prevNode.`subscript` == nil
+          if prevNode != nil && !(prevNode is SizedDelimiter) && prevNode.type == .ordinary && prevNode.`subscript` == nil
             && prevNode.superscript == nil
           {
             prevNode.fuse(with: atom)
@@ -942,6 +942,24 @@ extension Math {
       return 50
     }
 
+    private func displayForExplicitNotation(_ atom: Atom) -> DisplayNode? {
+      if let delimiter = atom as? SizedDelimiter {
+        if delimiter.nucleus.isEmpty { return DisplayNode() }
+        return findGlyphForBoundary(delimiter.nucleus,
+          withHeight: styleFont.font.size * delimiter.sizeInEm)
+      }
+      guard let stack = atom as? StackRelation,
+        let base = Typesetter.createLineForMathList(stack.base, font: font, style: style),
+        let upper = Typesetter.createLineForMathList(stack.annotation, font: font,
+          style: scriptStyle(), cramped: false)
+      else { return nil }
+      let display = DisplayLargeOperator(nucleus: base, upperLimit: upper, lowerLimit: nil,
+        limitShift: 0, extraPadding: 0)
+      display.upperLimitGap = max(styleFont.metrics.upperLimitGapMin,
+        styleFont.metrics.upperLimitBaselineRiseMin - upper.descent)
+      return display
+    }
+
     func createDisplayAtoms(_ preprocessed: [Atom]) {
       // items should contain all the nodes that need to be layed out.
       // convert to a list of DisplayAtoms
@@ -951,6 +969,20 @@ extension Math {
         // Get next atoms for look-ahead (up to 3 atoms ahead)
         let nextAtoms = Array(
           preprocessed.suffix(from: min(index + 1, preprocessed.count)).prefix(3))
+        if let custom = displayForExplicitNotation(atom) {
+          if currentLine.length > 0 { self.addDisplayLine() }
+          self.addInterElementSpace(prevNode, currentType: atom.type)
+          custom.position = currentPosition
+          custom.range = atom.indexRange
+          displayAtoms.append(custom)
+          currentPosition.x += custom.width
+          if atom.subscript != nil || atom.superscript != nil {
+            makeScripts(atom, display: custom, index: UInt(atom.indexRange.location), delta: 0)
+          }
+          lastType = atom.type
+          prevNode = atom
+          continue
+        }
         switch atom.type {
         case .number, .variable, .unaryOperator:
           // These should never appear as they should have been removed by preprocessing

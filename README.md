@@ -138,3 +138,7 @@ This work would not be possible without these projects and their contributors.
 ## License
 
 This library is released under the MIT license. See [LICENSE](LICENSE) for details.
+
+### Explicit mathematical notation
+
+The parser supports `\stackrel{annotation}{relation}` with centered script-sized annotations, the `\big`, `\Big`, `\bigg`, and `\Bigg` delimiter families (including `l`, `r`, and `m` spacing variants), and the strict inclusion symbols `\subsetneq` and `\supsetneq`. Explicit delimiter sizes are independent of the adjacent expression height. Invalid or incomplete commands retain the normal parser failure behavior.

@@ -217,6 +217,8 @@ extension Math {
       "succ": Atom(type: .relation, nucleus: "\u{227B}"),
       "subset": Atom(type: .relation, nucleus: "\u{2282}"),
       "supset": Atom(type: .relation, nucleus: "\u{2283}"),
+      "subsetneq": Atom(type: .relation, nucleus: "\u{228A}"),
+      "supsetneq": Atom(type: .relation, nucleus: "\u{228B}"),
       "subseteq": Atom(type: .relation, nucleus: "\u{2286}"),
       "supseteq": Atom(type: .relation, nucleus: "\u{2287}"),
       "sqsubset": Atom(type: .relation, nucleus: "\u{228F}"),
