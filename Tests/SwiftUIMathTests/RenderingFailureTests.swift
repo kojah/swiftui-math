@@ -1,3 +1,4 @@
+import CoreText
 import SwiftUI
 import Testing
 
@@ -40,6 +41,22 @@ struct RenderingFailureTests {
           #expect(measured.origin == legacy.origin)
         }
       }
+    }
+  }
+
+  @Test func italicTerminalInkFitsMeasuredWidth() throws {
+    for source in ["T", "f", #"\mathrm{BB}(\mathrm{BB}(n))"#] {
+      let node = try #require(Math.DisplayProvider.shared.display(
+        for: source, font: font, style: .text, proposedWidth: 0))
+      let list = try #require(node as? Math.DisplayList)
+      let run = try #require(list.children.last as? Math.DisplayTextRun)
+      let line = CTLineCreateWithAttributedString(run.attributedString)
+      let ink = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds)
+      let bounds = try Math.measurement(
+        for: source, fitting: .unspecified, font: font, style: .text).get()
+      #expect(bounds.width >= run.position.x + ink.maxX)
+      #expect(bounds.ascent >= ink.maxY)
+      #expect(bounds.descent >= -ink.minY)
     }
   }
 

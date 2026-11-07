@@ -1,4 +1,5 @@
 import CoreGraphics
+import CoreText
 import Foundation
 
 extension Math {
@@ -7,6 +8,8 @@ extension Math {
     var font: Math.Font
     var atoms: [Math.Atom]
     var text: String { attributedString.string }
+    private let inkRight: CGFloat
+    override var renderingWidth: CGFloat { max(width, inkRight) }
 
     init(
       attributedString: NSAttributedString,
@@ -15,6 +18,8 @@ extension Math {
       range: NSRange,
       atoms: [Math.Atom]
     ) {
+      let line = CTLineCreateWithAttributedString(attributedString)
+      self.inkRight = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds).maxX
       self.attributedString = attributedString
       self.font = font
       self.atoms = atoms

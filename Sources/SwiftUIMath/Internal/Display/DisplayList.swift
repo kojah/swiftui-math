@@ -9,6 +9,10 @@ extension Math {
       case superscript
     }
 
+    override var renderingWidth: CGFloat {
+      children.reduce(width) { max($0, $1.position.x + $1.renderingWidth) }
+    }
+
     var linePosition: LinePosition = .regular
     var children: [DisplayNode] = []
     var index: Int = NSNotFound

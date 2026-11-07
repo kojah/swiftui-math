@@ -13,8 +13,10 @@ extension Math {
     var localTextColor: CGColor?
     var localBackgroundColor: CGColor?
 
+    var renderingWidth: CGFloat { width }
+
     var bounds: CGRect {
-      CGRect(x: position.x, y: position.y - descent, width: width, height: ascent + descent)
+      CGRect(x: position.x, y: position.y - descent, width: renderingWidth, height: ascent + descent)
     }
   }
 }
