@@ -106,7 +106,7 @@ extension Math {
       for: latex, font: font, style: style, proposedWidth: proposal.width ?? 0
     ).map {
       TypographicBounds(
-        origin: $0.position, width: $0.renderingWidth, ascent: $0.ascent, descent: $0.descent)
+        origin: $0.position, width: $0.renderingWidth.rounded(.up), ascent: $0.ascent, descent: $0.descent)
     } ?? .zero
   }
 
@@ -132,7 +132,7 @@ extension Math {
       .flatMap {
         let bounds = TypographicBounds(
           origin: $0.position,
-          width: $0.renderingWidth,
+          width: $0.renderingWidth.rounded(.up),
           ascent: $0.ascent,
           descent: $0.descent
         )

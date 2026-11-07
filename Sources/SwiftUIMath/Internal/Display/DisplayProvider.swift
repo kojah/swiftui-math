@@ -80,14 +80,14 @@ extension Math {
 
         cache.displayNode.setObject(displayNode, forKey: key)
 
-        if displayNode.renderingWidth != roundedWidth {
+        if displayNode.renderingWidth.rounded(.up) != roundedWidth {
           // Cache the measured width to avoid a miss between layout and draw passes
           let secondaryKey = KeyBox(
             Cache.Key(
               latex: latex,
               font: font,
               style: style,
-              proposedWidth: displayNode.renderingWidth.halfPointRounded()
+              proposedWidth: displayNode.renderingWidth.rounded(.up)
             )
           )
           cache.displayNode.setObject(displayNode, forKey: secondaryKey)

@@ -60,6 +60,23 @@ struct RenderingFailureTests {
     }
   }
 
+  @Test func pixelQuantizedDrawingKeepsMeasuredInlineLayout() throws {
+    let source = #"\mathrm{BB}(\mathrm{BB}(n))"#
+    for size: CGFloat in [19, 20, 20.4, 22] {
+      let font = Math.Font(name: .latinModern, size: size)
+      let measured = try Math.measurement(
+        for: source, fitting: .unspecified, font: font, style: .text).get()
+      for scale: CGFloat in [1, 2, 3] {
+        let pixelWidth = (measured.width * scale).rounded(.down) / scale
+        let drawn = try #require(Math.DisplayProvider.shared.display(
+          for: source, font: font, style: .text, proposedWidth: pixelWidth))
+        #expect(drawn.ascent == measured.ascent)
+        #expect(drawn.descent == measured.descent)
+        #expect(drawn.renderingWidth <= measured.width)
+      }
+    }
+  }
+
   @Test func widthConstraintIsNotMisreportedAsInvalidSource() {
     for width: CGFloat in [0, -1] {
       let result = Math.measurement(
